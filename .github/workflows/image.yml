@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "postgrest base tag AND output image tag (e.g. v14.12)"
+        description: "postgrest base tag AND output image tag (e.g. v14.18)"
         required: true
 
 permissions:
@@ -29,3 +29,10 @@ jobs:
           build-args: |
             POSTGREST_TAG=${{ inputs.tag }}
           tags: ghcr.io/${{ github.repository_owner }}/postgrest-sh:${{ inputs.tag }}
+      - name: Verify shell boot contract and PostgREST version
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/postgrest-sh:${{ inputs.tag }}
+          EXPECTED_VERSION: ${{ inputs.tag }}
+        run: |
+          version=$(docker run --rm --entrypoint /bin/sh "$IMAGE" -c 'exec /bin/postgrest --version')
+          test "${version#PostgREST }" = "$EXPECTED_VERSION"
